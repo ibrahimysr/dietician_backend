@@ -52,4 +52,8 @@ class Dietitian extends Model
     {
         return $this->hasMany(Goal::class, 'dietitian_id');
     }
+    public function recipes()
+    {
+        return $this->hasMany(Recipe::class, 'dietitian_id');
+    }
 }
