@@ -9,7 +9,7 @@ class Client extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'clients'; 
+    protected $table = 'clients';
 
     protected $fillable = [
         'user_id',
@@ -42,5 +42,9 @@ class Client extends Model
     public function dietitian()
     {
         return $this->belongsTo(Dietitian::class, 'dietitian_id');
+    }
+    public function dietPlans()
+    {
+        return $this->hasMany(DietPlan::class, 'client_id');
     }
 }

@@ -36,4 +36,8 @@ class Dietitian extends Model
     {
         return $this->hasMany(Client::class, 'dietitian_id');
     }
+    public function dietPlans()
+    {
+        return $this->hasMany(DietPlan::class, 'dietitian_id');
+    }
 }
