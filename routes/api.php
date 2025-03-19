@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ClientController;
+use App\Http\Controllers\API\DietitianController;
 
 
 Route::prefix('auth')->group(function () {
@@ -36,4 +37,18 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::get('dietitians/{dietitianId}/clients', [ClientController::class, 'getClientsByDietitian']);
     Route::get('users/{userId}/client', [ClientController::class, 'getClientByUserId']);
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('dietitians-list', [DietitianController::class, 'index']);
+    Route::post('dietitians-add', [DietitianController::class, 'store']);
+    Route::get('dietitians-get/{dietitian}', [DietitianController::class, 'show']);
+    Route::put('dietitians-update/{dietitian}', [DietitianController::class, 'update']);
+    Route::delete('dietitians-delete/{dietitian}', [DietitianController::class, 'destroy']);
+    
+    Route::get('users/{userId}/dietitian', [DietitianController::class, 'getDietitianByUserId']);
+    Route::put('dietitians/{dietitian}/toggle-status', [DietitianController::class, 'toggleActiveStatus']);
+    Route::get('dietitians/{dietitian}/stats', [DietitianController::class, 'getDietitianStats']);
+    Route::get('active-dietitians', [DietitianController::class, 'getActiveDietitians']);
 });
