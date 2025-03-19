@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\ClientController;
+
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [UserController::class, 'store']);
@@ -22,4 +24,16 @@ Route::middleware('auth:sanctum')->group(function () {
             'data' => $request->user(),
         ]);
     });
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('clients-list', [ClientController::class, 'index']);
+    Route::post('clients-add', [ClientController::class, 'store']);
+    Route::get('clients-get/{client}', [ClientController::class, 'show']);
+    Route::put('clients-update/{client}', [ClientController::class, 'update']);
+    Route::delete('clients-delete/{client}', [ClientController::class, 'destroy']);
+    
+    Route::get('dietitians/{dietitianId}/clients', [ClientController::class, 'getClientsByDietitian']);
+    Route::get('users/{userId}/client', [ClientController::class, 'getClientByUserId']);
 });
