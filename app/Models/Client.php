@@ -47,4 +47,8 @@ class Client extends Model
     {
         return $this->hasMany(DietPlan::class, 'client_id');
     }
+    public function foodLogs()
+    {
+        return $this->hasMany(FoodLog::class, 'client_id');
+    }
 }

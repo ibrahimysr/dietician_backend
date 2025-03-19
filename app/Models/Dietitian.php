@@ -40,4 +40,8 @@ class Dietitian extends Model
     {
         return $this->hasMany(DietPlan::class, 'dietitian_id');
     }
+    public function subscriptionPlans()
+    {
+        return $this->hasMany(SubscriptionPlan::class, 'dietitian_id');
+    }
 }
