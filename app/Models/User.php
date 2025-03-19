@@ -41,7 +41,16 @@ class User extends Authenticatable
         return $this->hasOne(Client::class, 'user_id');
     }
     public function foods()
-{
-    return $this->hasMany(Food::class, 'created_by');
-}
+    {
+        return $this->hasMany(Food::class, 'created_by');
+    }
+    public function sentMessages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    public function receivedMessages()
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
 }

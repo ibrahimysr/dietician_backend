@@ -63,4 +63,8 @@ class Client extends Model
     {
         return $this->hasMany(Progress::class, 'client_id');
     }
+    public function goals()
+    {
+        return $this->hasMany(Goal::class, 'client_id');
+    }
 }
