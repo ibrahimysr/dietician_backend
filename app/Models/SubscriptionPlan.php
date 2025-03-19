@@ -9,7 +9,7 @@ class SubscriptionPlan extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'subscription_plans'; 
+    protected $table = 'subscription_plans';
 
     protected $fillable = [
         'dietitian_id',
@@ -24,7 +24,7 @@ class SubscriptionPlan extends Model
     protected $casts = [
         'duration' => 'integer',
         'price' => 'decimal:2',
-        'features' => 'array', 
+        'features' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
@@ -33,5 +33,9 @@ class SubscriptionPlan extends Model
     public function dietitian()
     {
         return $this->belongsTo(Dietitian::class, 'dietitian_id');
+    }
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class, 'subscription_plan_id');
     }
 }

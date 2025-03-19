@@ -51,4 +51,16 @@ class Client extends Model
     {
         return $this->hasMany(FoodLog::class, 'client_id');
     }
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class, 'client_id');
+    }
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'client_id');
+    }
+    public function progress()
+    {
+        return $this->hasMany(Progress::class, 'client_id');
+    }
 }
