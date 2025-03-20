@@ -1,66 +1,136 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Diyetisyen API Uygulaması
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Bu proje, diyetisyenler ve müşterileri arasındaki ilişkiyi yönetmek için Laravel tabanlı bir API sunucusudur. Flutter ile geliştirilecek mobil uygulamanın backend tarafıdır.
 
-## About Laravel
+## Proje Hakkında
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Bu uygulama, diyetisyenlerin müşterileriyle etkileşime geçmesini, diyet planları oluşturmasını, beslenme takibi yapmasını ve ilerleme durumlarını izlemesini sağlar. Ayrıca abonelik, ödeme sistemi ve tarif paylaşımı gibi özellikleri de içerir.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Teknolojiler
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 
+- Laravel 
+- MySQL 
+- Laravel Sanctum (API Kimlik Doğrulama)
+- Laravel Eloquent ORM
+- Soft Delete 
+- JWT (JSON Web Token)
 
-## Learning Laravel
+## Kurulum
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+1. Projeyi klonlayın:
+   ```bash
+   git clone https://github.com/ibrahimysr/dietician_backend
+   cd dietician_backend
+   ```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+2. Bağımlılıkları yükleyin:
+   ```bash
+   composer install
+   ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+3. Çevre değişkenlerini ayarlayın:
+   ```bash
+   cp .env.example .env
+   ```
 
-## Laravel Sponsors
+4. `.env` dosyasını düzenleyerek veritabanı bağlantı bilgilerinizi girin.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+5. Uygulama anahtarını oluşturun:
+   ```bash
+   php artisan key:generate
+   ```
 
-### Premium Partners
+6. Veritabanı tablolarını oluşturun:
+   ```bash
+   php artisan migrate
+   ```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+7. (İsteğe bağlı) Örnek verileri yükleyin:
+   ```bash
+   php artisan db:seed
+   ```
 
-## Contributing
+8. Geliştirme sunucusunu başlatın:
+   ```bash
+   php artisan serve
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Veri Modeli
 
-## Code of Conduct
+Uygulama aşağıdaki ana veri modellerini kullanır:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Kullanıcı ve Profil Tabloları
+- **users**: Tüm kullanıcılar (diyetisyenler ve müşteriler)
+- **dietitians**: Diyetisyenlere özel bilgiler
+- **clients**: Müşterilere özel bilgiler
 
-## Security Vulnerabilities
+### Diyet ve Beslenme Tabloları
+- **diet_plans**: Müşterilere özel diyet planları
+- **diet_plan_meals**: Diyet planlarındaki öğünler
+- **foods**: Besin veritabanı
+- **food_logs**: Müşterilerin beslenme günlükleri
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Abonelik ve Ödeme Tabloları
+- **subscription_plans**: Diyetisyenlerin sunduğu abonelik planları
+- **subscriptions**: Müşterilerin aktif abonelikleri
+- **payments**: Yapılan ödemeler
 
-## License
+### İlerleme ve Hedef Tabloları
+- **progress**: Müşterilerin ilerleme kayıtları
+- **goals**: Müşterilerin hedefleri
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### İletişim ve İçerik Tabloları
+- **messages**: Kullanıcılar arası mesajlaşma
+- **recipes**: Diyetisyenler tarafından paylaşılan tarifler
+
+
+
+## Kimlik Doğrulama ve Yetkilendirme
+
+Uygulama, Laravel Sanctum kullanarak token tabanlı kimlik doğrulama sağlar. Her API isteği için geçerli bir token gereklidir.
+
+```php
+// Örnek istek:
+$response = $http->withHeaders([
+    'Authorization' => 'Bearer ' . $token,
+    'Accept' => 'application/json',
+])->get('/api/user');
+```
+
+Yetkilendirme, kullanıcı rollerine göre yapılır:
+
+- `dietitian`: Diyetisyen rolüne sahip kullanıcılar
+- `client`: Müşteri rolüne sahip kullanıcılar
+-  `admin`: Gerekli admin işlemini sağlayan kullanıcı
+
+
+## Veritabanı İlişkileri
+
+Ana veritabanı ilişkileri şunlardır:
+
+- Bir kullanıcı (`users`) ya bir diyetisyen (`dietitians`) ya da bir müşteri (`clients`) olabilir.
+- Bir diyetisyen (`dietitians`) birçok müşteriye (`clients`) sahip olabilir.
+- Bir müşteri (`clients`) en fazla bir diyetisyene (`dietitians`) sahip olabilir.
+- Bir diyetisyen (`dietitians`) birçok diyet planı (`diet_plans`) oluşturabilir.
+- Bir diyet planı (`diet_plans`) birçok öğün (`diet_plan_meals`) içerebilir.
+- Bir müşteri (`clients`) birçok beslenme günlüğü (`food_logs`) kaydı tutabilir.
+- Bir diyetisyen (`dietitians`) birçok abonelik planı (`subscription_plans`) oluşturabilir.
+
+
+
+
+## Hata Kodları
+
+API, şu hata kodlarını döndürebilir:
+
+- 200: Başarılı
+- 201: Başarıyla oluşturuldu
+- 400: Geçersiz istek
+- 401: Yetkisiz erişim
+- 403: Yasaklanmış erişim
+- 404: Kaynak bulunamadı
+- 422: Doğrulama hatası
+- 500: Sunucu hatası
+
+
