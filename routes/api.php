@@ -6,6 +6,7 @@ use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ClientController;
 use App\Http\Controllers\API\DietitianController;
 use App\Http\Controllers\API\DietPlanController;
+use App\Http\Controllers\API\DietPlanMealController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [UserController::class, 'store']);
@@ -33,7 +34,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('clients-get/{client}', [ClientController::class, 'show']);
     Route::put('clients-update/{client}', [ClientController::class, 'update']);
     Route::delete('clients-delete/{client}', [ClientController::class, 'destroy']);
-    
     Route::get('dietitians/{dietitianId}/clients', [ClientController::class, 'getClientsByDietitian']);
     Route::get('users/{userId}/client', [ClientController::class, 'getClientByUserId']);
 });
@@ -44,7 +44,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('dietitians-get/{dietitian}', [DietitianController::class, 'show']);
     Route::put('dietitians-update/{dietitian}', [DietitianController::class, 'update']);
     Route::delete('dietitians-delete/{dietitian}', [DietitianController::class, 'destroy']);
-    
     Route::get('users/{userId}/dietitian', [DietitianController::class, 'getDietitianByUserId']);
     Route::put('dietitians/{dietitian}/toggle-status', [DietitianController::class, 'toggleActiveStatus']);
     Route::get('dietitians/{dietitian}/stats', [DietitianController::class, 'getDietitianStats']);
@@ -59,4 +58,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('diet-plans-delete/{dietPlan}', [DietPlanController::class, 'destroy']);
     Route::get('dietitians/{dietitianId}/diet-plans', [DietPlanController::class, 'getDietPlansByDietitian']);
     Route::get('clients/{clientId}/diet-plans', [DietPlanController::class, 'getDietPlansByClient']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('diet-plan-meals-list', [DietPlanMealController::class, 'index']);
+    Route::post('diet-plan-meals-add', [DietPlanMealController::class, 'store']);
+    Route::get('diet-plan-meals-get/{dietPlanMeal}', [DietPlanMealController::class, 'show']);
+    Route::put('diet-plan-meals-update/{dietPlanMeal}', [DietPlanMealController::class, 'update']);
+    Route::delete('diet-plan-meals-delete/{dietPlanMeal}', [DietPlanMealController::class, 'destroy']);
+    Route::get('diet-plans/{dietPlanId}/meals', [DietPlanMealController::class, 'getMealsByDietPlan']);
 });
