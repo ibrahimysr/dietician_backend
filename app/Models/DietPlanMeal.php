@@ -9,7 +9,7 @@ class DietPlanMeal extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'diet_plan_meals'; 
+    protected $table = 'diet_plan_meals';
 
     protected $fillable = [
         'diet_plan_id',

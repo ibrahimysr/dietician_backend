@@ -9,7 +9,7 @@ class FoodLog extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'food_logs'; 
+    protected $table = 'food_logs';
 
     protected $fillable = [
         'client_id',
@@ -47,5 +47,11 @@ class FoodLog extends Model
     public function food()
     {
         return $this->belongsTo(Food::class, 'food_id');
+    }
+
+   
+    public function isFromFoodTable(): bool
+    {
+        return !is_null($this->food_id);
     }
 }
