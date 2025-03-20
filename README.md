@@ -20,8 +20,8 @@ Bu uygulama, diyetisyenlerin müşterileriyle etkileşime geçmesini, diyet plan
 
 1. Projeyi klonlayın:
    ```bash
-   git clone https://github.com/kullaniciadi/laravel-dietitian-app.git
-   cd laravel-dietitian-app
+   git clone https://github.com/ibrahimysr/dietician_backend
+   cd dietician_backend
    ```
 
 2. Bağımlılıkları yükleyin:
