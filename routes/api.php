@@ -9,6 +9,7 @@ use App\Http\Controllers\API\DietPlanController;
 use App\Http\Controllers\API\DietPlanMealController;
 use App\Http\Controllers\API\FoodController;
 use App\Http\Controllers\API\FoodLogController;
+use App\Http\Controllers\API\SubscriptionPlanController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [UserController::class, 'store']);
@@ -90,4 +91,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('clients/{clientId}/food-logs', [FoodLogController::class, 'getFoodLogsByClient']);
     Route::get('clients/{clientId}/food-logs/{date}', [FoodLogController::class, 'getFoodLogsByClientAndDate']);
     Route::get('clients/{clientId}/compare-diet-plan/{date}', [FoodLogController::class, 'compareDietPlanWithFoodLogs']);
+}); 
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('subscription-plans-list', [SubscriptionPlanController::class, 'index']);
+    Route::post('subscription-plans-add', [SubscriptionPlanController::class, 'store']);
+    Route::get('subscription-plans-get/{subscriptionPlan}', [SubscriptionPlanController::class, 'show']);
+    Route::put('subscription-plans-update/{subscriptionPlan}', [SubscriptionPlanController::class, 'update']);
+    Route::delete('subscription-plans-delete/{subscriptionPlan}', [SubscriptionPlanController::class, 'destroy']);
+    Route::get('dietitians/{dietitianId}/subscription-plans', [SubscriptionPlanController::class, 'getSubscriptionPlansByDietitian']);
 });
