@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ClientController;
 use App\Http\Controllers\API\DietitianController;
-
+use App\Http\Controllers\API\DietPlanController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [UserController::class, 'store']);
@@ -27,7 +27,6 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('clients-list', [ClientController::class, 'index']);
     Route::post('clients-add', [ClientController::class, 'store']);
@@ -38,7 +37,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('dietitians/{dietitianId}/clients', [ClientController::class, 'getClientsByDietitian']);
     Route::get('users/{userId}/client', [ClientController::class, 'getClientByUserId']);
 });
-
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('dietitians-list', [DietitianController::class, 'index']);
@@ -51,4 +49,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('dietitians/{dietitian}/toggle-status', [DietitianController::class, 'toggleActiveStatus']);
     Route::get('dietitians/{dietitian}/stats', [DietitianController::class, 'getDietitianStats']);
     Route::get('active-dietitians', [DietitianController::class, 'getActiveDietitians']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('diet-plans-list', [DietPlanController::class, 'index']);
+    Route::post('diet-plans-add', [DietPlanController::class, 'store']);
+    Route::get('diet-plans-get/{dietPlan}', [DietPlanController::class, 'show']);
+    Route::put('diet-plans-update/{dietPlan}', [DietPlanController::class, 'update']);
+    Route::delete('diet-plans-delete/{dietPlan}', [DietPlanController::class, 'destroy']);
+    Route::get('dietitians/{dietitianId}/diet-plans', [DietPlanController::class, 'getDietPlansByDietitian']);
+    Route::get('clients/{clientId}/diet-plans', [DietPlanController::class, 'getDietPlansByClient']);
 });
