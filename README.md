@@ -133,11 +133,4 @@ API, şu hata kodlarını döndürebilir:
 - 422: Doğrulama hatası
 - 500: Sunucu hatası
 
-## Katkıda Bulunma
-
-1. Projeyi forklayın
-2. Özellik dalı oluşturun (`git checkout -b feature/amazing-feature`)
-3. Değişikliklerinizi commit edin (`git commit -m 'Add some amazing feature'`)
-4. Dalınıza push yapın (`git push origin feature/amazing-feature`)
-5. Bir Pull Request oluşturun
 
