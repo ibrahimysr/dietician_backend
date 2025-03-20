@@ -8,9 +8,9 @@ Bu uygulama, diyetisyenlerin müşterileriyle etkileşime geçmesini, diyet plan
 
 ## Teknolojiler
 
-- PHP 8.2+
-- Laravel 10.x
-- MySQL 8.0+
+- PHP 
+- Laravel 
+- MySQL 
 - Laravel Sanctum (API Kimlik Doğrulama)
 - Laravel Eloquent ORM
 - Soft Delete 
