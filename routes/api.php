@@ -7,6 +7,7 @@ use App\Http\Controllers\API\ClientController;
 use App\Http\Controllers\API\DietitianController;
 use App\Http\Controllers\API\DietPlanController;
 use App\Http\Controllers\API\DietPlanMealController;
+use App\Http\Controllers\API\FoodController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [UserController::class, 'store']);
@@ -67,4 +68,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('diet-plan-meals-update/{dietPlanMeal}', [DietPlanMealController::class, 'update']);
     Route::delete('diet-plan-meals-delete/{dietPlanMeal}', [DietPlanMealController::class, 'destroy']);
     Route::get('diet-plans/{dietPlanId}/meals', [DietPlanMealController::class, 'getMealsByDietPlan']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('foods-list', [FoodController::class, 'index']);
+    Route::post('foods-add', [FoodController::class, 'store']);
+    Route::get('foods-get/{food}', [FoodController::class, 'show']);
+    Route::put('foods-update/{food}', [FoodController::class, 'update']);
+    Route::delete('foods-delete/{food}', [FoodController::class, 'destroy']);
+    Route::get('foods-custom', [FoodController::class, 'getCustomFoods']);
+    Route::get('foods-general', [FoodController::class, 'getGeneralFoods']);
 });
