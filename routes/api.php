@@ -12,6 +12,8 @@ use App\Http\Controllers\API\FoodLogController;
 use App\Http\Controllers\API\SubscriptionPlanController;
 use App\Http\Controllers\API\SubscriptionController;
 use App\Http\Controllers\API\PaymentController;
+use App\Http\Controllers\API\ProgressController;
+use App\Http\Controllers\API\GoalController;
 
 
 Route::prefix('auth')->group(function () {
@@ -124,4 +126,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('payments-delete/{payment}', [PaymentController::class, 'destroy']);
     Route::get('clients/{clientId}/payments', [PaymentController::class, 'getPaymentsByClient']);
     Route::get('subscriptions/{subscriptionId}/payments', [PaymentController::class, 'getPaymentsBySubscription']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('progress-list', [ProgressController::class, 'index']);
+    Route::post('progress-add', [ProgressController::class, 'store']);
+    Route::get('progress-get/{progress}', [ProgressController::class, 'show']);
+    Route::put('progress-update/{progress}', [ProgressController::class, 'update']);
+    Route::delete('progress-delete/{progress}', [ProgressController::class, 'destroy']);
+    Route::get('clients/{clientId}/progress', [ProgressController::class, 'getProgressByClient']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('goals-list', [GoalController::class, 'index']);
+    Route::post('goals-add', [GoalController::class, 'store']);
+    Route::get('goals-get/{goal}', [GoalController::class, 'show']);
+    Route::put('goals-update/{goal}', [GoalController::class, 'update']);
+    Route::delete('goals-delete/{goal}', [GoalController::class, 'destroy']);
+    Route::get('clients/{clientId}/goals', [GoalController::class, 'getGoalsByClient']);
+    Route::get('dietitians/{dietitianId}/goals', [GoalController::class, 'getGoalsByDietitian']);
 });
