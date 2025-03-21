@@ -9,7 +9,7 @@ class Subscription extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'subscriptions'; // Tablo adı
+    protected $table = 'subscriptions';
 
     protected $fillable = [
         'client_id',
