@@ -11,6 +11,7 @@ use App\Http\Controllers\API\FoodController;
 use App\Http\Controllers\API\FoodLogController;
 use App\Http\Controllers\API\SubscriptionPlanController;
 use App\Http\Controllers\API\SubscriptionController;
+use App\Http\Controllers\API\PaymentController;
 
 
 Route::prefix('auth')->group(function () {
@@ -112,4 +113,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('subscriptions-delete/{subscription}', [SubscriptionController::class, 'destroy']);
     Route::get('clients/{clientId}/subscriptions', [SubscriptionController::class, 'getSubscriptionsByClient']);
     Route::get('dietitians/{dietitianId}/subscriptions', [SubscriptionController::class, 'getSubscriptionsByDietitian']);
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('payments-list', [PaymentController::class, 'index']);
+    Route::post('payments-add', [PaymentController::class, 'store']);
+    Route::get('payments-get/{payment}', [PaymentController::class, 'show']);
+    Route::put('payments-update/{payment}', [PaymentController::class, 'update']);
+    Route::delete('payments-delete/{payment}', [PaymentController::class, 'destroy']);
+    Route::get('clients/{clientId}/payments', [PaymentController::class, 'getPaymentsByClient']);
+    Route::get('subscriptions/{subscriptionId}/payments', [PaymentController::class, 'getPaymentsBySubscription']);
 });
