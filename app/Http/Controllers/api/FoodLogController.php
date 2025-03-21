@@ -10,7 +10,6 @@ use App\Models\Dietitian;
 use App\Models\DietPlan;
 use App\Models\DietPlanMeal;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class FoodLogController extends Controller

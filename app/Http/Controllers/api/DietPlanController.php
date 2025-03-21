@@ -7,7 +7,6 @@ use App\Models\DietPlan;
 use App\Models\Client;
 use App\Models\Dietitian;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class DietPlanController extends Controller
@@ -22,7 +21,6 @@ class DietPlanController extends Controller
                 'data' => $dietPlans,
             ]);
         } catch (\Exception $e) {
-            Log::error('Diyet planları listeleme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Diyet planları getirilemedi: ' . $e->getMessage(),
@@ -100,7 +98,6 @@ class DietPlanController extends Controller
                 'is_ongoing' => $request->is_ongoing ?? false,
             ]);
 
-            Log::info('Diyet planı oluşturuldu', ['diet_plan_id' => $dietPlan->id]);
 
             return response()->json([
                 'success' => true,
@@ -114,7 +111,6 @@ class DietPlanController extends Controller
                 'data' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Diyet planı oluşturma hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Diyet planı oluşturulamadı: ' . $e->getMessage(),
@@ -134,7 +130,6 @@ class DietPlanController extends Controller
                 'data' => $dietPlan,
             ]);
         } catch (\Exception $e) {
-            Log::error('Diyet planı getirme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Diyet planı getirilemedi: ' . $e->getMessage(),
@@ -206,7 +201,6 @@ class DietPlanController extends Controller
 
             $dietPlan->update($request->except('client_id'));
 
-            Log::info('Diyet planı güncellendi', ['diet_plan_id' => $dietPlan->id]);
 
             return response()->json([
                 'success' => true,
@@ -220,7 +214,6 @@ class DietPlanController extends Controller
                 'data' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Diyet planı güncelleme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Diyet planı güncellenemedi: ' . $e->getMessage(),
@@ -235,7 +228,6 @@ class DietPlanController extends Controller
         try {
             $dietPlan->delete();
 
-            Log::info('Diyet planı silindi', ['diet_plan_id' => $dietPlan->id]);
 
             return response()->json([
                 'success' => true,
@@ -243,7 +235,6 @@ class DietPlanController extends Controller
                 'data' => null,
             ], 204);
         } catch (\Exception $e) {
-            Log::error('Diyet planı silme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Diyet planı silinemedi: ' . $e->getMessage(),
@@ -266,7 +257,6 @@ class DietPlanController extends Controller
                 'data' => $dietPlans,
             ]);
         } catch (\Exception $e) {
-            Log::error('Diyetisyenin diyet planları getirme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Diyetisyenin diyet planları getirilemedi: ' . $e->getMessage(),
@@ -296,7 +286,6 @@ class DietPlanController extends Controller
                 'data' => $dietPlans,
             ]);
         } catch (\Exception $e) {
-            Log::error('Danışanın diyet planları getirme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Danışanın diyet planları getirilemedi: ' . $e->getMessage(),

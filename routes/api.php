@@ -14,6 +14,8 @@ use App\Http\Controllers\API\SubscriptionController;
 use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\ProgressController;
 use App\Http\Controllers\API\GoalController;
+use App\Http\Controllers\API\RecipeController;
+use App\Http\Controllers\API\MessageController;
 
 
 Route::prefix('auth')->group(function () {
@@ -145,4 +147,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('goals-delete/{goal}', [GoalController::class, 'destroy']);
     Route::get('clients/{clientId}/goals', [GoalController::class, 'getGoalsByClient']);
     Route::get('dietitians/{dietitianId}/goals', [GoalController::class, 'getGoalsByDietitian']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('recipes-list', [RecipeController::class, 'index']);
+    Route::post('recipes-add', [RecipeController::class, 'store']);
+    Route::get('recipes-get/{recipe}', [RecipeController::class, 'show']);
+    Route::put('recipes-update/{recipe}', [RecipeController::class, 'update']);
+    Route::delete('recipes-delete/{recipe}', [RecipeController::class, 'destroy']);
+    Route::get('dietitians/{dietitianId}/recipes', [RecipeController::class, 'getRecipesByDietitian']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('messages-add', [MessageController::class, 'store']);
+    Route::get('messages-get-conversation/{userId}', [MessageController::class, 'getConversation']);
+    Route::get('messages-get-conversations', [MessageController::class, 'getConversations']);
+    Route::put('messages-mark-read/{messageId}', [MessageController::class, 'markAsRead']);
+    Route::delete('messages-delete/{messageId}', [MessageController::class, 'destroy']);
 });

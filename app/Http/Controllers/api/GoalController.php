@@ -260,10 +260,10 @@ class GoalController extends Controller
             if ($request->has('target_value') && $request->has('current_value') && !$progressPercentage) {
                 $target = $request->target_value;
                 $current = $request->current_value;
-                $initial = $goal->current_value ?? $current; // İlk ölçümden başlama varsayımı
+                $initial = $goal->current_value ?? $current; 
                 if ($target != $initial) {
                     $progressPercentage = (($initial - $current) / ($initial - $target)) * 100;
-                    $progressPercentage = max(0, min(100, $progressPercentage)); // 0-100 arasında sınırla
+                    $progressPercentage = max(0, min(100, $progressPercentage)); 
                 }
             }
 

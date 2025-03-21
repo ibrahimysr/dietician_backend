@@ -7,7 +7,6 @@ use App\Models\Payment;
 use App\Models\Client;
 use App\Models\Subscription;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller

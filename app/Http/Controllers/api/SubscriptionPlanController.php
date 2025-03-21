@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\SubscriptionPlan;
 use App\Models\Dietitian;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class SubscriptionPlanController extends Controller
