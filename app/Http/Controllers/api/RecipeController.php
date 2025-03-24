@@ -6,11 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Recipe;
 use App\Models\Dietitian;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class RecipeController extends Controller
 {
-    
     public function index(Request $request)
     {
         try {
@@ -43,6 +44,7 @@ class RecipeController extends Controller
                 'data' => $recipes,
             ]);
         } catch (\Exception $e) {
+            Log::error('Tarif listeleme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Tarifler getirilemedi: ' . $e->getMessage(),
@@ -68,7 +70,7 @@ class RecipeController extends Controller
                 'fat' => 'required|numeric|min:0',
                 'carbs' => 'required|numeric|min:0',
                 'tags' => 'nullable|string',
-                'photo_url' => 'nullable|string|max:255',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
                 'is_public' => 'required|boolean',
             ];
 
@@ -95,7 +97,9 @@ class RecipeController extends Controller
                 'fat.numeric' => 'Yağ sayısal bir değer olmalıdır',
                 'carbs.required' => 'Karbonhidrat alanı zorunludur',
                 'carbs.numeric' => 'Karbonhidrat sayısal bir değer olmalıdır',
-                'photo_url.max' => 'Fotoğraf URL’si 255 karakterden uzun olamaz',
+                'photo.image' => 'Yüklenen dosya bir resim olmalıdır',
+                'photo.mimes' => 'Resim yalnızca jpeg, png, jpg veya gif formatında olabilir',
+                'photo.max' => 'Resim boyutu 2MB’ı geçemez',
                 'is_public.required' => 'Herkese açık mı alanı zorunludur',
                 'is_public.boolean' => 'Herkese açık mı alanı true/false olmalıdır',
             ];
@@ -121,8 +125,33 @@ class RecipeController extends Controller
                 ], 403);
             }
 
-            $recipe = Recipe::create($request->all());
+            $photoUrl = null;
+            if ($request->hasFile('photo')) {
+                $photoPath = $request->file('photo')->store('recipe_photos', 'public');
+                $photoUrl = Storage::disk('public')->url($photoPath);
+            }
 
+            $recipeData = [
+                'dietitian_id' => $request->dietitian_id,
+                'title' => $request->title,
+                'description' => $request->description,
+                'ingredients' => $request->ingredients,
+                'instructions' => $request->instructions,
+                'prep_time' => $request->prep_time,
+                'cook_time' => $request->cook_time,
+                'servings' => $request->servings,
+                'calories' => $request->calories,
+                'protein' => $request->protein,
+                'fat' => $request->fat,
+                'carbs' => $request->carbs,
+                'tags' => $request->tags,
+                'photo_url' => $photoUrl,
+                'is_public' => $request->is_public,
+            ];
+
+            $recipe = Recipe::create($recipeData);
+
+            Log::info('Tarif oluşturuldu', ['recipe_id' => $recipe->id]);
 
             return response()->json([
                 'success' => true,
@@ -136,6 +165,7 @@ class RecipeController extends Controller
                 'data' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            Log::error('Tarif oluşturma hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Tarif oluşturulamadı: ' . $e->getMessage(),
@@ -143,7 +173,6 @@ class RecipeController extends Controller
             ], 500);
         }
     }
-
 
     public function show(Recipe $recipe)
     {
@@ -166,6 +195,7 @@ class RecipeController extends Controller
                 'data' => $recipe,
             ]);
         } catch (\Exception $e) {
+            Log::error('Tarif getirme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Tarif getirilemedi: ' . $e->getMessage(),
@@ -174,7 +204,6 @@ class RecipeController extends Controller
         }
     }
 
-  
     public function update(Request $request, Recipe $recipe)
     {
         try {
@@ -191,7 +220,7 @@ class RecipeController extends Controller
                 'fat' => 'sometimes|required|numeric|min:0',
                 'carbs' => 'sometimes|required|numeric|min:0',
                 'tags' => 'nullable|string',
-                'photo_url' => 'nullable|string|max:255',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
                 'is_public' => 'sometimes|required|boolean',
             ];
 
@@ -216,7 +245,9 @@ class RecipeController extends Controller
                 'fat.numeric' => 'Yağ sayısal bir değer olmalıdır',
                 'carbs.required' => 'Karbonhidrat alanı zorunludur',
                 'carbs.numeric' => 'Karbonhidrat sayısal bir değer olmalıdır',
-                'photo_url.max' => 'Fotoğraf URL’si 255 karakterden uzun olamaz',
+                'photo.image' => 'Yüklenen dosya bir resim olmalıdır',
+                'photo.mimes' => 'Resim yalnızca jpeg, png, jpg veya gif formatında olabilir',
+                'photo.max' => 'Resim boyutu 2MB’ı geçemez',
                 'is_public.required' => 'Herkese açık mı alanı zorunludur',
                 'is_public.boolean' => 'Herkese açık mı alanı true/false olmalıdır',
             ];
@@ -234,8 +265,36 @@ class RecipeController extends Controller
                 ], 403);
             }
 
-            $recipe->update($request->all());
+            $photoUrl = $recipe->photo_url;
+            if ($request->hasFile('photo')) {
+                if ($photoUrl) {
+                    $oldPhotoPath = str_replace(Storage::disk('public')->url(''), '', $photoUrl);
+                    Storage::disk('public')->delete($oldPhotoPath);
+                }
+                $photoPath = $request->file('photo')->store('recipe_photos', 'public');
+                $photoUrl = Storage::disk('public')->url($photoPath);
+            }
 
+            $recipeData = [
+                'title' => $request->title ?? $recipe->title,
+                'description' => $request->description ?? $recipe->description,
+                'ingredients' => $request->ingredients ?? $recipe->ingredients,
+                'instructions' => $request->instructions ?? $recipe->instructions,
+                'prep_time' => $request->prep_time ?? $recipe->prep_time,
+                'cook_time' => $request->cook_time ?? $recipe->cook_time,
+                'servings' => $request->servings ?? $recipe->servings,
+                'calories' => $request->calories ?? $recipe->calories,
+                'protein' => $request->protein ?? $recipe->protein,
+                'fat' => $request->fat ?? $recipe->fat,
+                'carbs' => $request->carbs ?? $recipe->carbs,
+                'tags' => $request->tags ?? $recipe->tags,
+                'photo_url' => $photoUrl,
+                'is_public' => $request->is_public ?? $recipe->is_public,
+            ];
+
+            $recipe->update($recipeData);
+
+            Log::info('Tarif güncellendi', ['recipe_id' => $recipe->id]);
 
             return response()->json([
                 'success' => true,
@@ -249,6 +308,7 @@ class RecipeController extends Controller
                 'data' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            Log::error('Tarif güncelleme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Tarif güncellenemedi: ' . $e->getMessage(),
@@ -257,7 +317,6 @@ class RecipeController extends Controller
         }
     }
 
- 
     public function destroy(Recipe $recipe)
     {
         try {
@@ -272,8 +331,14 @@ class RecipeController extends Controller
                 ], 403);
             }
 
+            if ($recipe->photo_url) {
+                $photoPath = str_replace(Storage::disk('public')->url(''), '', $recipe->photo_url);
+                Storage::disk('public')->delete($photoPath);
+            }
+
             $recipe->delete();
 
+            Log::info('Tarif silindi', ['recipe_id' => $recipe->id]);
 
             return response()->json([
                 'success' => true,
@@ -281,6 +346,7 @@ class RecipeController extends Controller
                 'data' => null,
             ], 204);
         } catch (\Exception $e) {
+            Log::error('Tarif silme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Tarif silinemedi: ' . $e->getMessage(),
@@ -289,7 +355,6 @@ class RecipeController extends Controller
         }
     }
 
-    
     public function getRecipesByDietitian($dietitianId)
     {
         try {
@@ -321,6 +386,7 @@ class RecipeController extends Controller
                 'data' => $recipes,
             ]);
         } catch (\Exception $e) {
+            Log::error('Diyetisyenin tarifleri getirme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Diyetisyenin tarifleri getirilemedi: ' . $e->getMessage(),

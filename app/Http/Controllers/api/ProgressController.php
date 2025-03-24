@@ -7,11 +7,11 @@ use App\Models\Progress;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class ProgressController extends Controller
 {
-    
     public function index()
     {
         try {
@@ -31,7 +31,6 @@ class ProgressController extends Controller
         }
     }
 
-    
     public function store(Request $request)
     {
         try {
@@ -45,7 +44,7 @@ class ProgressController extends Controller
                 'hip' => 'nullable|numeric|min:0',
                 'body_fat_percentage' => 'nullable|numeric|min:0|max:100',
                 'notes' => 'nullable|string',
-                'photo_url' => 'nullable|string|max:255',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
             ];
 
             $messages = [
@@ -61,8 +60,9 @@ class ProgressController extends Controller
                 'hip.numeric' => 'Kalça ölçüsü sayısal bir değer olmalıdır',
                 'body_fat_percentage.numeric' => 'Vücut yağ oranı sayısal bir değer olmalıdır',
                 'body_fat_percentage.max' => 'Vücut yağ oranı 100’den büyük olamaz',
-                'photo_url.string' => 'Fotoğraf URL’si bir metin olmalıdır',
-                'photo_url.max' => 'Fotoğraf URL’si 255 karakterden uzun olamaz',
+                'photo.image' => 'Yüklenen dosya bir resim olmalıdır',
+                'photo.mimes' => 'Resim yalnızca jpeg, png, jpg veya gif formatında olabilir',
+                'photo.max' => 'Resim boyutu 2MB’ı geçemez',
             ];
 
             $request->validate($rules, $messages);
@@ -95,8 +95,28 @@ class ProgressController extends Controller
                 ], 403);
             }
 
-            $progress = Progress::create($request->all());
+            $photoUrl = null;
+            if ($request->hasFile('photo')) {
+                $photoPath = $request->file('photo')->store('progress_photos', 'public');
+                $photoUrl = Storage::disk('public')->url($photoPath);
+            }
 
+            $progressData = [
+                'client_id' => $request->client_id,
+                'date' => $request->date,
+                'weight' => $request->weight,
+                'waist' => $request->waist,
+                'arm' => $request->arm,
+                'chest' => $request->chest,
+                'hip' => $request->hip,
+                'body_fat_percentage' => $request->body_fat_percentage,
+                'notes' => $request->notes,
+                'photo_url' => $photoUrl,
+            ];
+
+            $progress = Progress::create($progressData);
+
+            Log::info('İlerleme kaydı oluşturuldu', ['progress_id' => $progress->id]);
 
             return response()->json([
                 'success' => true,
@@ -110,6 +130,7 @@ class ProgressController extends Controller
                 'data' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            Log::error('İlerleme kaydı oluşturma hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'İlerleme kaydı oluşturulamadı: ' . $e->getMessage(),
@@ -118,7 +139,6 @@ class ProgressController extends Controller
         }
     }
 
-    
     public function show(Progress $progress)
     {
         try {
@@ -129,6 +149,7 @@ class ProgressController extends Controller
                 'data' => $progress,
             ]);
         } catch (\Exception $e) {
+            Log::error('İlerleme kaydı getirme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'İlerleme kaydı getirilemedi: ' . $e->getMessage(),
@@ -137,7 +158,6 @@ class ProgressController extends Controller
         }
     }
 
-    
     public function update(Request $request, Progress $progress)
     {
         try {
@@ -149,7 +169,7 @@ class ProgressController extends Controller
                 'hip' => 'nullable|numeric|min:0',
                 'body_fat_percentage' => 'nullable|numeric|min:0|max:100',
                 'notes' => 'nullable|string',
-                'photo_url' => 'nullable|string|max:255',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
             ];
 
             $messages = [
@@ -161,8 +181,9 @@ class ProgressController extends Controller
                 'hip.numeric' => 'Kalça ölçüsü sayısal bir değer olmalıdır',
                 'body_fat_percentage.numeric' => 'Vücut yağ oranı sayısal bir değer olmalıdır',
                 'body_fat_percentage.max' => 'Vücut yağ oranı 100’den büyük olamaz',
-                'photo_url.string' => 'Fotoğraf URL’si bir metin olmalıdır',
-                'photo_url.max' => 'Fotoğraf URL’si 255 karakterden uzun olamaz',
+                'photo.image' => 'Yüklenen dosya bir resim olmalıdır',
+                'photo.mimes' => 'Resim yalnızca jpeg, png, jpg veya gif formatında olabilir',
+                'photo.max' => 'Resim boyutu 2MB’ı geçemez',
             ];
 
             $request->validate($rules, $messages);
@@ -195,8 +216,30 @@ class ProgressController extends Controller
                 ], 403);
             }
 
-            $progress->update($request->all());
+            $photoUrl = $progress->photo_url;
+            if ($request->hasFile('photo')) {
+                if ($photoUrl) {
+                    $oldPhotoPath = str_replace(Storage::disk('public')->url(''), '', $photoUrl);
+                    Storage::disk('public')->delete($oldPhotoPath);
+                }
+                $photoPath = $request->file('photo')->store('progress_photos', 'public');
+                $photoUrl = Storage::disk('public')->url($photoPath);
+            }
 
+            $progressData = [
+                'weight' => $request->weight ?? $progress->weight,
+                'waist' => $request->waist ?? $progress->waist,
+                'arm' => $request->arm ?? $progress->arm,
+                'chest' => $request->chest ?? $progress->chest,
+                'hip' => $request->hip ?? $progress->hip,
+                'body_fat_percentage' => $request->body_fat_percentage ?? $progress->body_fat_percentage,
+                'notes' => $request->notes ?? $progress->notes,
+                'photo_url' => $photoUrl,
+            ];
+
+            $progress->update($progressData);
+
+            Log::info('İlerleme kaydı güncellendi', ['progress_id' => $progress->id]);
 
             return response()->json([
                 'success' => true,
@@ -210,6 +253,7 @@ class ProgressController extends Controller
                 'data' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            Log::error('İlerleme kaydı güncelleme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'İlerleme kaydı güncellenemedi: ' . $e->getMessage(),
@@ -218,7 +262,6 @@ class ProgressController extends Controller
         }
     }
 
-    
     public function destroy(Progress $progress)
     {
         try {
@@ -250,8 +293,14 @@ class ProgressController extends Controller
                 ], 403);
             }
 
+            if ($progress->photo_url) {
+                $photoPath = str_replace(Storage::disk('public')->url(''), '', $progress->photo_url);
+                Storage::disk('public')->delete($photoPath);
+            }
+
             $progress->delete();
 
+            Log::info('İlerleme kaydı silindi', ['progress_id' => $progress->id]);
 
             return response()->json([
                 'success' => true,
@@ -259,6 +308,7 @@ class ProgressController extends Controller
                 'data' => null,
             ], 204);
         } catch (\Exception $e) {
+            Log::error('İlerleme kaydı silme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'İlerleme kaydı silinemedi: ' . $e->getMessage(),
@@ -307,6 +357,7 @@ class ProgressController extends Controller
                 'data' => $progressRecords,
             ]);
         } catch (\Exception $e) {
+            Log::error('Danışanın ilerleme kayıtları getirme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Danışanın ilerleme kayıtları getirilemedi: ' . $e->getMessage(),

@@ -10,11 +10,12 @@ use App\Models\Dietitian;
 use App\Models\DietPlan;
 use App\Models\DietPlanMeal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class FoodLogController extends Controller
 {
-
     public function index()
     {
         try {
@@ -25,6 +26,7 @@ class FoodLogController extends Controller
                 'data' => $foodLogs,
             ]);
         } catch (\Exception $e) {
+            Log::error('Besin logları listeleme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Besin logları getirilemedi: ' . $e->getMessage(),
@@ -41,7 +43,7 @@ class FoodLogController extends Controller
                 'date' => 'required|date',
                 'meal_type' => 'required|in:breakfast,lunch,dinner,snack',
                 'quantity' => 'required|numeric|min:0',
-                'photo_url' => 'nullable|string|max:255',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
                 'logged_at' => 'required|date',
             ];
 
@@ -68,6 +70,9 @@ class FoodLogController extends Controller
                 'food_description.required' => 'Besin açıklaması alanı zorunludur (food_id belirtilmediğinde)',
                 'calories.required' => 'Kalori alanı zorunludur (food_id belirtilmediğinde)',
                 'calories.integer' => 'Kalori bir tamsayı olmalıdır',
+                'photo.image' => 'Yüklenen dosya bir resim olmalıdır',
+                'photo.mimes' => 'Resim yalnızca jpeg, png, jpg veya gif formatında olabilir',
+                'photo.max' => 'Resim boyutu 2MB’ı geçemez',
             ];
 
             $request->validate($rules, $messages);
@@ -84,12 +89,18 @@ class FoodLogController extends Controller
                 ], 403);
             }
 
+            $photoUrl = null;
+            if ($request->hasFile('photo')) {
+                $photoPath = $request->file('photo')->store('food_logs', 'public');
+                $photoUrl = Storage::disk('public')->url($photoPath);
+            }
+
             $foodData = [
                 'client_id' => $request->client_id,
                 'date' => $request->date,
                 'meal_type' => $request->meal_type,
                 'quantity' => $request->quantity,
-                'photo_url' => $request->photo_url,
+                'photo_url' => $photoUrl,
                 'logged_at' => $request->logged_at,
             ];
 
@@ -112,11 +123,12 @@ class FoodLogController extends Controller
 
             $foodLog = FoodLog::create($foodData);
 
+            Log::info('Besin logu oluşturuldu', ['food_log_id' => $foodLog->id]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Besin logu başarıyla oluşturuldu',
-                'data' => $foodLog,
+                'data' => $foodLog->load('client.user', 'food'),
             ], 201);
         } catch (ValidationException $e) {
             return response()->json([
@@ -125,6 +137,7 @@ class FoodLogController extends Controller
                 'data' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            Log::error('Besin logu oluşturma hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Besin logu oluşturulamadı: ' . $e->getMessage(),
@@ -132,7 +145,6 @@ class FoodLogController extends Controller
             ], 500);
         }
     }
-
 
     public function show(FoodLog $foodLog)
     {
@@ -166,6 +178,7 @@ class FoodLogController extends Controller
                 'data' => $foodLog,
             ]);
         } catch (\Exception $e) {
+            Log::error('Besin logu getirme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Besin logu getirilemedi: ' . $e->getMessage(),
@@ -182,7 +195,7 @@ class FoodLogController extends Controller
                 'date' => 'sometimes|required|date',
                 'meal_type' => 'sometimes|required|in:breakfast,lunch,dinner,snack',
                 'quantity' => 'sometimes|required|numeric|min:0',
-                'photo_url' => 'nullable|string|max:255',
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
                 'logged_at' => 'sometimes|required|date',
             ];
 
@@ -209,6 +222,9 @@ class FoodLogController extends Controller
                 'food_description.required' => 'Besin açıklaması alanı zorunludur (food_id belirtilmediğinde)',
                 'calories.required' => 'Kalori alanı zorunludur (food_id belirtilmediğinde)',
                 'calories.integer' => 'Kalori bir tamsayı olmalıdır',
+                'photo.image' => 'Yüklenen dosya bir resim olmalıdır',
+                'photo.mimes' => 'Resim yalnızca jpeg, png, jpg veya gif formatında olabilir',
+                'photo.max' => 'Resim boyutu 2MB’ı geçemez',
             ];
 
             $request->validate($rules, $messages);
@@ -226,34 +242,54 @@ class FoodLogController extends Controller
                 ], 403);
             }
 
+            $photoUrl = $foodLog->photo_url;
+            if ($request->hasFile('photo')) {
+                if ($photoUrl) {
+                    $oldPhotoPath = str_replace(Storage::disk('public')->url(''), '', $photoUrl);
+                    Storage::disk('public')->delete($oldPhotoPath);
+                }
+                $photoPath = $request->file('photo')->store('food_logs', 'public');
+                $photoUrl = Storage::disk('public')->url($photoPath);
+            }
+
+            $foodData = [
+                'client_id' => $request->client_id ?? $foodLog->client_id,
+                'date' => $request->date ?? $foodLog->date,
+                'meal_type' => $request->meal_type ?? $foodLog->meal_type,
+                'quantity' => $request->quantity ?? $foodLog->quantity,
+                'photo_url' => $photoUrl,
+                'logged_at' => $request->logged_at ?? $foodLog->logged_at,
+            ];
+
             if ($request->has('food_id') || ($foodLog->food_id && !$request->has('food_id'))) {
                 $foodId = $request->food_id ?? $foodLog->food_id;
                 $quantity = $request->quantity ?? $foodLog->quantity;
 
                 $food = Food::findOrFail($foodId);
                 $servingMultiplier = $quantity / $food->serving_size;
-                $foodLog->food_id = $food->id;
-                $foodLog->food_description = $food->name;
-                $foodLog->calories = round($food->calories * $servingMultiplier);
-                $foodLog->protein = $food->protein ? round($food->protein * $servingMultiplier, 2) : null;
-                $foodLog->fat = $food->fat ? round($food->fat * $servingMultiplier, 2) : null;
-                $foodLog->carbs = $food->carbs ? round($food->carbs * $servingMultiplier, 2) : null;
+                $foodData['food_id'] = $food->id;
+                $foodData['food_description'] = $food->name;
+                $foodData['calories'] = round($food->calories * $servingMultiplier);
+                $foodData['protein'] = $food->protein ? round($food->protein * $servingMultiplier, 2) : null;
+                $foodData['fat'] = $food->fat ? round($food->fat * $servingMultiplier, 2) : null;
+                $foodData['carbs'] = $food->carbs ? round($food->carbs * $servingMultiplier, 2) : null;
             } elseif ($request->has('food_description') || $request->has('calories')) {
-                $foodLog->food_id = null;
-                $foodLog->food_description = $request->food_description ?? $foodLog->food_description;
-                $foodLog->calories = $request->calories ?? $foodLog->calories;
-                $foodLog->protein = $request->has('protein') ? $request->protein : $foodLog->protein;
-                $foodLog->fat = $request->has('fat') ? $request->fat : $foodLog->fat;
-                $foodLog->carbs = $request->has('carbs') ? $request->carbs : $foodLog->carbs;
+                $foodData['food_id'] = null;
+                $foodData['food_description'] = $request->food_description ?? $foodLog->food_description;
+                $foodData['calories'] = $request->calories ?? $foodLog->calories;
+                $foodData['protein'] = $request->has('protein') ? $request->protein : $foodLog->protein;
+                $foodData['fat'] = $request->has('fat') ? $request->fat : $foodLog->fat;
+                $foodData['carbs'] = $request->has('carbs') ? $request->carbs : $foodLog->carbs;
             }
 
-            $foodLog->update($request->except(['calories', 'protein', 'fat', 'carbs', 'food_description']));
+            $foodLog->update($foodData);
 
+            Log::info('Besin logu güncellendi', ['food_log_id' => $foodLog->id]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Besin logu başarıyla güncellendi',
-                'data' => $foodLog,
+                'data' => $foodLog->load('client.user', 'food'),
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -262,6 +298,7 @@ class FoodLogController extends Controller
                 'data' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
+            Log::error('Besin logu güncelleme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Besin logu güncellenemedi: ' . $e->getMessage(),
@@ -269,7 +306,6 @@ class FoodLogController extends Controller
             ], 500);
         }
     }
-
 
     public function destroy(FoodLog $foodLog)
     {
@@ -286,8 +322,14 @@ class FoodLogController extends Controller
                 ], 403);
             }
 
+            if ($foodLog->photo_url) {
+                $photoPath = str_replace(Storage::disk('public')->url(''), '', $foodLog->photo_url);
+                Storage::disk('public')->delete($photoPath);
+            }
+
             $foodLog->delete();
 
+            Log::info('Besin logu silindi', ['food_log_id' => $foodLog->id]);
 
             return response()->json([
                 'success' => true,
@@ -295,6 +337,7 @@ class FoodLogController extends Controller
                 'data' => null,
             ], 204);
         } catch (\Exception $e) {
+            Log::error('Besin logu silme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Besin logu silinemedi: ' . $e->getMessage(),
@@ -346,6 +389,7 @@ class FoodLogController extends Controller
                 'data' => $foodLogs,
             ]);
         } catch (\Exception $e) {
+            Log::error('Danışanın besin logları getirme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Danışanın besin logları getirilemedi: ' . $e->getMessage(),
@@ -398,6 +442,7 @@ class FoodLogController extends Controller
                 'data' => $foodLogs,
             ]);
         } catch (\Exception $e) {
+            Log::error('Danışanın tarihe göre besin logları getirme hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Danışanın tarihe göre besin logları getirilemedi: ' . $e->getMessage(),
@@ -405,6 +450,7 @@ class FoodLogController extends Controller
             ], 500);
         }
     }
+
     public function compareDietPlanWithFoodLogs($clientId, $date)
     {
         try {
@@ -575,6 +621,7 @@ class FoodLogController extends Controller
                 'data' => $comparison,
             ]);
         } catch (\Exception $e) {
+            Log::error('Karşılaştırma hatası', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Karşılaştırma yapılamadı: ' . $e->getMessage(),

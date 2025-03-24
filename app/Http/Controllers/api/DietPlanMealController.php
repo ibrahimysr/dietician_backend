@@ -8,11 +8,11 @@ use App\Models\DietPlanMeal;
 use App\Models\DietPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class DietPlanMealController extends Controller
 {
-  
     public function index()
     {
         try {
@@ -35,17 +35,19 @@ class DietPlanMealController extends Controller
     public function store(Request $request)
     {
         try {
-            $request->validate([
+            $rules = [
                 'diet_plan_id' => 'required|exists:diet_plans,id',
                 'day_number' => 'required|integer|min:1',
                 'meal_type' => 'required|in:breakfast,lunch,dinner,snack',
-                'description' => 'required|string',
+                'description' => 'required|string -string',
                 'calories' => 'required|integer|min:0',
                 'protein' => 'required|numeric|min:0',
                 'fat' => 'required|numeric|min:0',
                 'carbs' => 'required|numeric|min:0',
-                'photo_url' => 'nullable|string|max:255',
-            ], [
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
+            ];
+
+            $messages = [
                 'diet_plan_id.required' => 'Diyet planı ID alanı zorunludur',
                 'diet_plan_id.exists' => 'Geçerli bir diyet planı ID giriniz',
                 'day_number.required' => 'Gün numarası alanı zorunludur',
@@ -61,7 +63,12 @@ class DietPlanMealController extends Controller
                 'fat.numeric' => 'Yağ sayısal bir değer olmalıdır',
                 'carbs.required' => 'Karbonhidrat alanı zorunludur',
                 'carbs.numeric' => 'Karbonhidrat sayısal bir değer olmalıdır',
-            ]);
+                'photo.image' => 'Yüklenen dosya bir resim olmalıdır',
+                'photo.mimes' => 'Resim yalnızca jpeg, png, jpg veya gif formatında olabilir',
+                'photo.max' => 'Resim boyutu 2MB’ı geçemez',
+            ];
+
+            $request->validate($rules, $messages);
 
             $dietPlan = DietPlan::findOrFail($request->diet_plan_id);
 
@@ -84,14 +91,30 @@ class DietPlanMealController extends Controller
                 ], 403);
             }
 
-            $meal = DietPlanMeal::create($request->all());
+            $photoUrl = null;
+            if ($request->hasFile('photo')) {
+                $photoPath = $request->file('photo')->store('diet_plan_meals', 'public');
+                $photoUrl = Storage::disk('public')->url($photoPath);
+            }
+
+            $meal = DietPlanMeal::create([
+                'diet_plan_id' => $request->diet_plan_id,
+                'day_number' => $request->day_number,
+                'meal_type' => $request->meal_type,
+                'description' => $request->description,
+                'calories' => $request->calories,
+                'protein' => $request->protein,
+                'fat' => $request->fat,
+                'carbs' => $request->carbs,
+                'photo_url' => $photoUrl,
+            ]);
 
             Log::info('Diyet planı öğünü oluşturuldu', ['meal_id' => $meal->id]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Diyet planı öğünü başarıyla oluşturuldu',
-                'data' => $meal,
+                'data' => $meal->load('dietPlan'),
             ], 201);
         } catch (ValidationException $e) {
             return response()->json([
@@ -128,11 +151,10 @@ class DietPlanMealController extends Controller
         }
     }
 
-    
     public function update(Request $request, DietPlanMeal $dietPlanMeal)
     {
         try {
-            $request->validate([
+            $rules = [
                 'diet_plan_id' => 'sometimes|required|exists:diet_plans,id',
                 'day_number' => 'sometimes|required|integer|min:1',
                 'meal_type' => 'sometimes|required|in:breakfast,lunch,dinner,snack',
@@ -141,8 +163,10 @@ class DietPlanMealController extends Controller
                 'protein' => 'sometimes|required|numeric|min:0',
                 'fat' => 'sometimes|required|numeric|min:0',
                 'carbs' => 'sometimes|required|numeric|min:0',
-                'photo_url' => 'nullable|string|max:255',
-            ], [
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
+            ];
+
+            $messages = [
                 'diet_plan_id.required' => 'Diyet planı ID alanı zorunludur',
                 'diet_plan_id.exists' => 'Geçerli bir diyet planı ID giriniz',
                 'day_number.required' => 'Gün numarası alanı zorunludur',
@@ -158,7 +182,12 @@ class DietPlanMealController extends Controller
                 'fat.numeric' => 'Yağ sayısal bir değer olmalıdır',
                 'carbs.required' => 'Karbonhidrat alanı zorunludur',
                 'carbs.numeric' => 'Karbonhidrat sayısal bir değer olmalıdır',
-            ]);
+                'photo.image' => 'Yüklenen dosya bir resim olmalıdır',
+                'photo.mimes' => 'Resim yalnızca jpeg, png, jpg veya gif formatında olabilir',
+                'photo.max' => 'Resim boyutu 2MB’ı geçemez',
+            ];
+
+            $request->validate($rules, $messages);
 
             if ($request->has('diet_plan_id') && $request->diet_plan_id != $dietPlanMeal->diet_plan_id) {
                 $dietPlan = DietPlan::findOrFail($request->diet_plan_id);
@@ -183,14 +212,34 @@ class DietPlanMealController extends Controller
                 }
             }
 
-            $dietPlanMeal->update($request->all());
+            $photoUrl = $dietPlanMeal->photo_url;
+            if ($request->hasFile('photo')) {
+                if ($photoUrl) {
+                    $oldPhotoPath = str_replace(Storage::disk('public')->url(''), '', $photoUrl);
+                    Storage::disk('public')->delete($oldPhotoPath);
+                }
+                $photoPath = $request->file('photo')->store('diet_plan_meals', 'public');
+                $photoUrl = Storage::disk('public')->url($photoPath);
+            }
+
+            $dietPlanMeal->update([
+                'diet_plan_id' => $request->diet_plan_id ?? $dietPlanMeal->diet_plan_id,
+                'day_number' => $request->day_number ?? $dietPlanMeal->day_number,
+                'meal_type' => $request->meal_type ?? $dietPlanMeal->meal_type,
+                'description' => $request->description ?? $dietPlanMeal->description,
+                'calories' => $request->calories ?? $dietPlanMeal->calories,
+                'protein' => $request->protein ?? $dietPlanMeal->protein,
+                'fat' => $request->fat ?? $dietPlanMeal->fat,
+                'carbs' => $request->carbs ?? $dietPlanMeal->carbs,
+                'photo_url' => $photoUrl,
+            ]);
 
             Log::info('Diyet planı öğünü güncellendi', ['meal_id' => $dietPlanMeal->id]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Diyet planı öğünü başarıyla güncellendi',
-                'data' => $dietPlanMeal,
+                'data' => $dietPlanMeal->load('dietPlan'),
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -211,6 +260,11 @@ class DietPlanMealController extends Controller
     public function destroy(DietPlanMeal $dietPlanMeal)
     {
         try {
+            if ($dietPlanMeal->photo_url) {
+                $photoPath = str_replace(Storage::disk('public')->url(''), '', $dietPlanMeal->photo_url);
+                Storage::disk('public')->delete($photoPath);
+            }
+
             $dietPlanMeal->delete();
 
             Log::info('Diyet planı öğünü silindi', ['meal_id' => $dietPlanMeal->id]);
@@ -230,7 +284,6 @@ class DietPlanMealController extends Controller
         }
     }
 
- 
     public function getMealsByDietPlan($dietPlanId)
     {
         try {
