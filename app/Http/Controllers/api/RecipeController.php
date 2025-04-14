@@ -63,8 +63,7 @@ class RecipeController extends Controller
                 'user_id' => 'required|integer|exists:users,id',
                 'title' => 'required|string|max:255',
                 'description' => 'required|string',
-                'ingredients' => 'required|array',
-                'ingredients.*' => 'string', 
+                'ingredients' => ['required', 'string', 'json'], 
                 'instructions' => 'required|string',
                 'prep_time' => 'required|integer|min:0',
                 'cook_time' => 'required|integer|min:0',
@@ -84,8 +83,9 @@ class RecipeController extends Controller
                  'title.required' => 'Başlık alanı zorunludur',
                  'title.max' => 'Başlık 255 karakterden uzun olamaz',
                  'description.required' => 'Açıklama alanı zorunludur',
-                 'ingredients.required' => 'Malzemeler alanı zorunludur',
-                 'ingredients.array' => 'Malzemeler bir dizi (array) olmalıdır',
+               'ingredients.required' => 'Malzemeler alanı zorunludur',
+         'ingredients.string' => 'Malzemeler metin formatında gönderilmelidir.',
+            'ingredients.json' => 'Malzemeler geçerli bir JSON formatında olmalıdır.', 
                  'instructions.required' => 'Talimatlar alanı zorunludur',
                  'prep_time.required' => 'Hazırlık süresi alanı zorunludur',
                  'prep_time.integer' => 'Hazırlık süresi bir tamsayı olmalıdır',
@@ -108,7 +108,10 @@ class RecipeController extends Controller
                  'is_public.boolean' => 'Herkese açık mı alanı true/false olmalıdır',
             ];
 
-            $validatedData = $request->validate($rules, $messages);
+            
+            $validatedData = $request->validate($rules, $messages); 
+
+            $validatedData['ingredients'] = json_decode($validatedData['ingredients'], true) ?? [];
 
             $userIdToCreateFor = $validatedData['user_id'];
             if (Auth::id() != $userIdToCreateFor) {
