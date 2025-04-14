@@ -477,6 +477,7 @@ class FoodLogController extends Controller
             }
 
             $dietPlan = DietPlan::where('client_id', $clientId)
+                ->where('status', 'active') 
                 ->where('start_date', '<=', $date)
                 ->where(function ($query) use ($date) {
                     $query->where('end_date', '>=', $date)

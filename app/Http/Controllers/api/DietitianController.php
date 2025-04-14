@@ -175,33 +175,38 @@ class DietitianController extends Controller
 
    
     public function getDietitianByUserId($userId)
-    {
-        try {
-            $dietitian = Dietitian::with('clients', 'subscriptionPlans', 'recipes')
-                ->where('user_id', $userId)
-                ->first();
+{
+    try {
+        $dietitian = Dietitian::with([
+            'user', 
+            'clients.user', // Include user information for each client
+            'subscriptionPlans', 
+            'recipes'
+        ])
+        ->where('user_id', $userId)
+        ->first();
 
-            if (!$dietitian) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Bu kullanıcı için diyetisyen kaydı bulunamadı',
-                    'data' => null,
-                ], 404);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Diyetisyen başarıyla getirildi',
-                'data' => $dietitian,
-            ]);
-        } catch (\Exception $e) {
+        if (!$dietitian) {
             return response()->json([
                 'success' => false,
-                'message' => 'Diyetisyen getirilemedi: ' . $e->getMessage(),
+                'message' => 'Bu kullanıcı için diyetisyen kaydı bulunamadı',
                 'data' => null,
-            ], 500);
+            ], 404);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Diyetisyen başarıyla getirildi',
+            'data' => $dietitian,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Diyetisyen getirilemedi: ' . $e->getMessage(),
+            'data' => null,
+        ], 500);
     }
+}
 
     public function toggleActiveStatus(Dietitian $dietitian)
     {

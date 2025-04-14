@@ -39,7 +39,7 @@ class DietPlanMealController extends Controller
                 'diet_plan_id' => 'required|exists:diet_plans,id',
                 'day_number' => 'required|integer|min:1',
                 'meal_type' => 'required|in:breakfast,lunch,dinner,snack',
-                'description' => 'required|string -string',
+                'description' => 'required|string',
                 'calories' => 'required|integer|min:0',
                 'protein' => 'required|numeric|min:0',
                 'fat' => 'required|numeric|min:0',

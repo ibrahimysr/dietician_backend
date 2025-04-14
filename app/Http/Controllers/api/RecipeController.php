@@ -8,7 +8,9 @@ use App\Models\Dietitian;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\ValidationException; 
+use Illuminate\Support\Facades\Auth; 
+
 
 class RecipeController extends Controller
 {
@@ -56,11 +58,13 @@ class RecipeController extends Controller
     public function store(Request $request)
     {
         try {
+           
             $rules = [
-                'dietitian_id' => 'required|exists:dietitians,id',
+                'user_id' => 'required|integer|exists:users,id',
                 'title' => 'required|string|max:255',
                 'description' => 'required|string',
                 'ingredients' => 'required|array',
+                'ingredients.*' => 'string', 
                 'instructions' => 'required|string',
                 'prep_time' => 'required|integer|min:0',
                 'cook_time' => 'required|integer|min:0',
@@ -70,59 +74,61 @@ class RecipeController extends Controller
                 'fat' => 'required|numeric|min:0',
                 'carbs' => 'required|numeric|min:0',
                 'tags' => 'nullable|string',
-                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
+                'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'is_public' => 'required|boolean',
             ];
 
             $messages = [
-                'dietitian_id.required' => 'Diyetisyen ID alanı zorunludur',
-                'dietitian_id.exists' => 'Geçerli bir diyetisyen ID giriniz',
-                'title.required' => 'Başlık alanı zorunludur',
-                'title.max' => 'Başlık 255 karakterden uzun olamaz',
-                'description.required' => 'Açıklama alanı zorunludur',
-                'ingredients.required' => 'Malzemeler alanı zorunludur',
-                'ingredients.array' => 'Malzemeler bir dizi olmalıdır',
-                'instructions.required' => 'Talimatlar alanı zorunludur',
-                'prep_time.required' => 'Hazırlık süresi alanı zorunludur',
-                'prep_time.integer' => 'Hazırlık süresi bir tamsayı olmalıdır',
-                'cook_time.required' => 'Pişirme süresi alanı zorunludur',
-                'cook_time.integer' => 'Pişirme süresi bir tamsayı olmalıdır',
-                'servings.required' => 'Porsiyon sayısı alanı zorunludur',
-                'servings.integer' => 'Porsiyon sayısı bir tamsayı olmalıdır',
-                'calories.required' => 'Kalori alanı zorunludur',
-                'calories.integer' => 'Kalori bir tamsayı olmalıdır',
-                'protein.required' => 'Protein alanı zorunludur',
-                'protein.numeric' => 'Protein sayısal bir değer olmalıdır',
-                'fat.required' => 'Yağ alanı zorunludur',
-                'fat.numeric' => 'Yağ sayısal bir değer olmalıdır',
-                'carbs.required' => 'Karbonhidrat alanı zorunludur',
-                'carbs.numeric' => 'Karbonhidrat sayısal bir değer olmalıdır',
-                'photo.image' => 'Yüklenen dosya bir resim olmalıdır',
-                'photo.mimes' => 'Resim yalnızca jpeg, png, jpg veya gif formatında olabilir',
-                'photo.max' => 'Resim boyutu 2MB’ı geçemez',
-                'is_public.required' => 'Herkese açık mı alanı zorunludur',
-                'is_public.boolean' => 'Herkese açık mı alanı true/false olmalıdır',
+                'user_id.required' => 'Kullanıcı ID alanı zorunludur.', 
+                'user_id.exists' => 'Geçersiz Kullanıcı ID.',          
+                 'title.required' => 'Başlık alanı zorunludur',
+                 'title.max' => 'Başlık 255 karakterden uzun olamaz',
+                 'description.required' => 'Açıklama alanı zorunludur',
+                 'ingredients.required' => 'Malzemeler alanı zorunludur',
+                 'ingredients.array' => 'Malzemeler bir dizi (array) olmalıdır',
+                 'instructions.required' => 'Talimatlar alanı zorunludur',
+                 'prep_time.required' => 'Hazırlık süresi alanı zorunludur',
+                 'prep_time.integer' => 'Hazırlık süresi bir tamsayı olmalıdır',
+                 'cook_time.required' => 'Pişirme süresi alanı zorunludur',
+                 'cook_time.integer' => 'Pişirme süresi bir tamsayı olmalıdır',
+                 'servings.required' => 'Porsiyon sayısı alanı zorunludur',
+                 'servings.integer' => 'Porsiyon sayısı bir tamsayı olmalıdır',
+                 'calories.required' => 'Kalori alanı zorunludur',
+                 'calories.integer' => 'Kalori bir tamsayı olmalıdır',
+                 'protein.required' => 'Protein alanı zorunludur',
+                 'protein.numeric' => 'Protein sayısal bir değer olmalıdır',
+                 'fat.required' => 'Yağ alanı zorunludur',
+                 'fat.numeric' => 'Yağ sayısal bir değer olmalıdır',
+                 'carbs.required' => 'Karbonhidrat alanı zorunludur',
+                 'carbs.numeric' => 'Karbonhidrat sayısal bir değer olmalıdır',
+                 'photo.image' => 'Yüklenen dosya bir resim olmalıdır',
+                 'photo.mimes' => 'Resim yalnızca jpeg, png, jpg veya gif formatında olabilir',
+                 'photo.max' => 'Resim boyutu 2MB’ı geçemez',
+                 'is_public.required' => 'Herkese açık mı alanı zorunludur',
+                 'is_public.boolean' => 'Herkese açık mı alanı true/false olmalıdır',
             ];
 
-            $request->validate($rules, $messages);
+            $validatedData = $request->validate($rules, $messages);
 
-            $currentUser = auth()->user();
-            $dietitian = Dietitian::where('user_id', $currentUser->id)->first();
-
-            if (!$dietitian) {
+            $userIdToCreateFor = $validatedData['user_id'];
+            if (Auth::id() != $userIdToCreateFor) {
+                 Log::warning('Yetkisiz tarif oluşturma denemesi', ['authenticated_user' => Auth::id(), 'requested_user_id' => $userIdToCreateFor]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Tarif oluşturma yetkiniz yok, sadece diyetisyenler tarif oluşturabilir',
+                    'message' => 'Sadece kendi adınıza tarif oluşturabilirsiniz.',
                     'data' => null,
-                ], 403);
+                ], 403); 
             }
 
-            if ($dietitian->id != $request->dietitian_id) {
-                return response()->json([
+            try {
+                $dietitian = Dietitian::where('user_id', $userIdToCreateFor)->firstOrFail();
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                Log::error('Diyetisyen kaydı bulunamadı', ['user_id' => $userIdToCreateFor]);
+                 return response()->json([
                     'success' => false,
-                    'message' => 'Sadece kendi adınıza tarif oluşturabilirsiniz',
+                    'message' => 'Belirtilen kullanıcı ID\'sine sahip bir diyetisyen kaydı bulunamadı. Tarif oluşturma yetkiniz yok.',
                     'data' => null,
-                ], 403);
+                ], 404); 
             }
 
             $photoUrl = null;
@@ -131,33 +137,27 @@ class RecipeController extends Controller
                 $photoUrl = Storage::disk('public')->url($photoPath);
             }
 
-            $recipeData = [
-                'dietitian_id' => $request->dietitian_id,
-                'title' => $request->title,
-                'description' => $request->description,
-                'ingredients' => $request->ingredients,
-                'instructions' => $request->instructions,
-                'prep_time' => $request->prep_time,
-                'cook_time' => $request->cook_time,
-                'servings' => $request->servings,
-                'calories' => $request->calories,
-                'protein' => $request->protein,
-                'fat' => $request->fat,
-                'carbs' => $request->carbs,
-                'tags' => $request->tags,
-                'photo_url' => $photoUrl,
-                'is_public' => $request->is_public,
-            ];
+            $recipeData = $validatedData;
+            unset($recipeData['user_id']);
+            $recipeData['dietitian_id'] = $dietitian->id; 
+            $recipeData['photo_url'] = $photoUrl;
+
+             if (is_string($recipeData['ingredients'])) {
+                $recipeData['ingredients'] = json_decode($recipeData['ingredients'], true) ?? [];
+             }
+             $recipeData['is_public'] = filter_var($request->is_public, FILTER_VALIDATE_BOOLEAN);
+
 
             $recipe = Recipe::create($recipeData);
 
-            Log::info('Tarif oluşturuldu', ['recipe_id' => $recipe->id]);
+            Log::info('Tarif oluşturuldu', ['recipe_id' => $recipe->id, 'dietitian_id' => $dietitian->id]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Tarif başarıyla oluşturuldu',
                 'data' => $recipe->load(['dietitian.user']),
             ], 201);
+
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
@@ -165,7 +165,7 @@ class RecipeController extends Controller
                 'data' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Tarif oluşturma hatası', ['error' => $e->getMessage()]);
+            Log::error('Tarif oluşturma hatası', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Tarif oluşturulamadı: ' . $e->getMessage(),
@@ -173,6 +173,7 @@ class RecipeController extends Controller
             ], 500);
         }
     }
+
 
     public function show(Recipe $recipe)
     {
