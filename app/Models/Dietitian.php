@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Dietitian extends Model
 {
     use SoftDeletes;
-
+    const STATUS_PENDING = 'pending';
+    const STATUS_APPROVED = 'approved';
+    const STATUS_REJECTED = 'rejected';  
     protected $table = 'dietitians';
 
     protected $fillable = [
@@ -18,6 +20,8 @@ class Dietitian extends Model
         'hourly_rate',
         'experience_years',
         'is_active',
+        'status',      
+        'rejection_reason', 
     ];
 
     protected $casts = [
@@ -26,7 +30,13 @@ class Dietitian extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
+    ]; 
+
+    protected $attributes = [
+        'status' => self::STATUS_PENDING,
+        'is_active' => false, 
     ];
+
 
     public function user()
     {
@@ -55,5 +65,20 @@ class Dietitian extends Model
     public function recipes()
     {
         return $this->hasMany(Recipe::class, 'dietitian_id');
+    } 
+
+    public function scopeApproved($query)
+    {
+        return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    public function scopeIsActive($query)
+    {
+        return $query->where('status', self::STATUS_APPROVED)->where('is_active', true);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', self::STATUS_PENDING);
     }
 }
