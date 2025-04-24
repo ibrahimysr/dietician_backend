@@ -17,6 +17,17 @@ use App\Http\Controllers\API\GoalController;
 use App\Http\Controllers\API\RecipeController;
 use App\Http\Controllers\API\MessageController;
 
+use App\Http\Controllers\API\Admin\DietitianApprovalController;
+
+
+Route::prefix('admin')->middleware(['auth:sanctum', 'admin'])->name('admin.')->group(function () {
+    Route::prefix('dietitians')->name('dietitians.')->group(function () {
+        Route::get('/pending', [DietitianApprovalController::class, 'listPending'])->name('pending');
+        Route::patch('/{dietitian}/approve', [DietitianApprovalController::class, 'approve'])->name('approve');
+        Route::patch('/{dietitian}/reject', [DietitianApprovalController::class, 'reject'])->name('reject');
+        Route::delete('/delete/{dietitian}', [DietitianController::class, 'destroy'])->name('destroy');
+    });
+});
 
 Route::prefix('auth')->group(function () {
     Route::post('/register', [UserController::class, 'store']);
@@ -98,7 +109,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('clients/{clientId}/food-logs', [FoodLogController::class, 'getFoodLogsByClient']);
     Route::get('clients/{clientId}/food-logs/{date}', [FoodLogController::class, 'getFoodLogsByClientAndDate']);
     Route::get('clients/{clientId}/compare-diet-plan/{date}', [FoodLogController::class, 'compareDietPlanWithFoodLogs']);
-}); 
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('subscription-plans-list', [SubscriptionPlanController::class, 'index']);
